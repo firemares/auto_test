@@ -1,0 +1,14 @@
+● mongod.service - mongodb
+   Loaded: loaded (/usr/lib/systemd/system/mongod.service; enabled; vendor preset: disabled)
+   Active: active (running) since 五 2023-05-12 23:02:26 CST; 3 days ago
+  Process: 18566 ExecStart=/usr/local/mongodb/bin/mongod --config /usr/local/mongodb/bin/mongodb.conf (code=exited, status=0/SUCCESS)
+ Main PID: 18568 (mongod)
+   CGroup: /system.slice/mongod.service
+           └─18568 /usr/local/mongodb/bin/mongod --config /usr/local/mongodb/bin/mongodb.conf
+
+5月 12 23:02:21 localhost.localdomain systemd[1]: Starting mongodb...
+5月 12 23:02:21 localhost.localdomain mongod[18566]: about to fork child process, waiting until server is ready for connections.
+5月 12 23:02:21 localhost.localdomain mongod[18566]: forked process: 18568
+5月 12 23:02:26 localhost.localdomain mongod[18566]: child process started successfully, parent exiting
+5月 12 23:02:26 localhost.localdomain systemd[1]: Started mongodb.
+

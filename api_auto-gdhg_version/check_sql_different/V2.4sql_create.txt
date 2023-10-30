@@ -1,0 +1,1990 @@
+/**********************************************/
+--
+--  API审计系统V1.0.0
+--  系统数据库结构初始化SQL脚本
+--  2021-10-14 14:54:20
+--
+/**********************************************/
+
+DROP DATABASE IF EXISTS `asi` ;
+CREATE DATABASE IF NOT EXISTS `asi` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+
+USE `asi`;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `account_security_option`
+--
+
+DROP TABLE IF EXISTS `account_security_option`;
+CREATE TABLE IF NOT EXISTS `account_security_option` (
+    `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `login_retry_time` int(11) NOT NULL DEFAULT '60' COMMENT '账户登录重试单位时间，单位：秒',
+    `login_retry_num` tinyint(4) NOT NULL DEFAULT '3' COMMENT '单位时间内可以重试登录的次数',
+    `login_retry_lock` tinyint(4) NOT NULL DEFAULT '1' COMMENT '单位时间内登录重试次数超过可重试次数的锁定时间，单位：分钟',
+    `session_timeout` int(11) NOT NULL DEFAULT '30' COMMENT '会话超时时间，单位：分钟',
+    `pw_length_min` tinyint(4) NOT NULL DEFAULT '6' COMMENT '密码最小长度',
+    `pw_length_max` tinyint(4) NOT NULL DEFAULT '30' COMMENT '密码最大长度',
+    `pw_invalid` tinyint(4) NOT NULL DEFAULT '0' COMMENT '密码过期开关：0-关闭，1-开启',
+    `pw_invalid_day` tinyint(4) NOT NULL COMMENT '密码过期天数',
+    `create_by` varchar(50) DEFAULT NULL COMMENT '创建者',
+    `update_by` varchar(50) DEFAULT NULL COMMENT '更新者',
+    `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='账户安全设置' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_component_group`
+--
+
+DROP TABLE IF EXISTS `acl_component_group`;
+CREATE TABLE IF NOT EXISTS `acl_component_group` (
+    `id` char(19) NOT NULL COMMENT '分组id',
+    `component_id` char(19) NOT NULL COMMENT '服务组件id',
+    `privilege_group_key` varchar(36) NOT NULL COMMENT '鉴权分组值',
+    `privilege_group_name` varchar(48) NOT NULL COMMENT '鉴权分组显示名',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `privilege_group_key` (`privilege_group_key`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='服务组件鉴权分组' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_component_group_privilege`
+--
+
+DROP TABLE IF EXISTS `acl_component_group_privilege`;
+CREATE TABLE IF NOT EXISTS `acl_component_group_privilege` (
+    `id` char(19) NOT NULL COMMENT 'id',
+    `component_id` char(19) NOT NULL COMMENT '服务组件id',
+    `privilege_group_key` varchar(36) NOT NULL COMMENT '鉴权分组值',
+    `privilege_key` varchar(36) NOT NULL COMMENT '鉴权值',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='服务组件分组鉴权关联表' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_component_privilege`
+--
+
+DROP TABLE IF EXISTS `acl_component_privilege`;
+CREATE TABLE IF NOT EXISTS `acl_component_privilege` (
+    `id` char(19) NOT NULL COMMENT '鉴权id',
+    `component_id` char(19) NOT NULL COMMENT '服务组件id',
+    `privilege_name` varchar(36) NOT NULL COMMENT '鉴权显示名',
+    `privilege_key` varchar(36) NOT NULL COMMENT '鉴权值',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `privilege_key` (`privilege_key`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_component_role`
+--
+
+DROP TABLE IF EXISTS `acl_component_role`;
+CREATE TABLE IF NOT EXISTS `acl_component_role` (
+    `id` char(19) NOT NULL COMMENT '分组id',
+    `component_id` char(19) NOT NULL COMMENT '服务组件id',
+    `role_key` varchar(36) NOT NULL COMMENT '角色值',
+    `role_name` varchar(48) NOT NULL COMMENT '角色名',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `role_key` (`role_key`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='服务组件角色' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_component_role_privilege`
+--
+
+DROP TABLE IF EXISTS `acl_component_role_privilege`;
+CREATE TABLE IF NOT EXISTS `acl_component_role_privilege` (
+    `id` char(19) NOT NULL COMMENT 'id',
+    `component_id` char(19) NOT NULL COMMENT '服务组件id',
+    `component_role_key` varchar(36) NOT NULL COMMENT '服务组件角色key',
+    `privilege_group_key` varchar(36) DEFAULT NULL COMMENT '鉴权分组值',
+    `privilege_key` varchar(36) DEFAULT NULL COMMENT '鉴权值',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='服务组件角色鉴权关联表' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_function`
+--
+
+DROP TABLE IF EXISTS `acl_function`;
+CREATE TABLE IF NOT EXISTS `acl_function` (
+    `id` char(19) CHARACTER SET utf8mb4 NOT NULL COMMENT '功能id',
+    `function_name` varchar(20) CHARACTER SET utf8mb4 NOT NULL DEFAULT '' COMMENT '功能名称',
+    `parent_id` char(19) NOT NULL COMMENT '上级模块id',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_menu`
+--
+
+DROP TABLE IF EXISTS `acl_menu`;
+CREATE TABLE IF NOT EXISTS `acl_menu` (
+    `id` char(19) CHARACTER SET utf8mb4 NOT NULL COMMENT '菜单id',
+    `menu_name` varchar(20) CHARACTER SET utf8mb4 NOT NULL DEFAULT '' COMMENT '菜单名称',
+    `function_id` char(19) DEFAULT NULL COMMENT '归属功能id',
+    `parent_id` char(19) NOT NULL COMMENT '上级菜单id',
+    `page_path` varchar(100) CHARACTER SET utf8mb4 DEFAULT NULL COMMENT '页面路径',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_menu_operate`
+--
+
+DROP TABLE IF EXISTS `acl_menu_operate`;
+CREATE TABLE IF NOT EXISTS `acl_menu_operate` (
+    `id` char(19) CHARACTER SET utf8mb4 NOT NULL COMMENT '主键id',
+    `menu_id` char(19) CHARACTER SET utf8mb4 NOT NULL COMMENT '菜单id',
+    `operate_id` char(19) CHARACTER SET utf8mb4 NOT NULL COMMENT '操作项id',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_menu_role`
+--
+
+DROP TABLE IF EXISTS `acl_menu_role`;
+CREATE TABLE IF NOT EXISTS `acl_menu_role` (
+    `id` char(19) NOT NULL COMMENT '菜单-角色关联表',
+    `menu_id` char(19) NOT NULL DEFAULT '' COMMENT '菜单id',
+    `role_id` char(19) NOT NULL COMMENT '角色id',
+    `is_valid` int(11) NOT NULL COMMENT '是否有效：1 是，0 否',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_operate`
+--
+
+DROP TABLE IF EXISTS `acl_operate`;
+CREATE TABLE IF NOT EXISTS `acl_operate` (
+    `id` char(19) CHARACTER SET utf8mb4 NOT NULL COMMENT '操作项id',
+    `operate_name` varchar(20) CHARACTER SET utf8mb4 NOT NULL DEFAULT '' COMMENT '操作项名称',
+    `privilege_flag` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否对应有服务鉴权项：0 无，1 有',
+    `operate_key` varchar(36) CHARACTER SET utf8mb4 NOT NULL COMMENT '操作值',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_permission`
+--
+
+DROP TABLE IF EXISTS `acl_permission`;
+CREATE TABLE IF NOT EXISTS `acl_permission` (
+    `id` char(19) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '编号',
+    `pid` char(19) NOT NULL COMMENT '所属上级',
+    `name` varchar(20) NOT NULL DEFAULT '' COMMENT '名称',
+    `type` tinyint(4) NOT NULL DEFAULT '0' COMMENT '类型(1:菜单,2:按钮)',
+    `permission_value` varchar(50) DEFAULT NULL COMMENT '权限值',
+    `path` varchar(100) DEFAULT NULL COMMENT '访问路径',
+    `component` varchar(100) DEFAULT NULL COMMENT '组件路径',
+    `icon` varchar(50) DEFAULT NULL COMMENT '图标',
+    `status` tinyint(4) DEFAULT NULL COMMENT '状态(0:禁止,1:正常)',
+    `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    KEY `idx_pid` (`pid`) USING BTREE
+    ) ENGINE=InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT='权限-菜单' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_role`
+--
+
+DROP TABLE IF EXISTS `acl_role`;
+CREATE TABLE IF NOT EXISTS `acl_role` (
+    `id` char(19) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '角色id',
+    `role_name` varchar(20) NOT NULL DEFAULT '' COMMENT '角色名称',
+    `role_key` varchar(20) DEFAULT NULL COMMENT '角色编码',
+    `built_in_flag` tinyint(4) NOT NULL DEFAULT '0' COMMENT '是否内置：1.是，2.否',
+    `is_valid` int(11) NOT NULL COMMENT '是否有效：1 是，0 否',
+    `remark` varchar(255) DEFAULT NULL COMMENT '备注',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `role_key` (`role_key`) USING BTREE
+    ) ENGINE=InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_role_permission`
+--
+
+DROP TABLE IF EXISTS `acl_role_permission`;
+CREATE TABLE IF NOT EXISTS `acl_role_permission` (
+    `id` char(19) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+    `role_id` char(19) NOT NULL,
+    `permission_id` char(19) NOT NULL,
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    KEY `idx_role_id` (`role_id`) USING BTREE,
+    KEY `idx_permission_id` (`permission_id`) USING BTREE
+    ) ENGINE=InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT='角色权限' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_role_privilege`
+--
+
+DROP TABLE IF EXISTS `acl_role_privilege`;
+CREATE TABLE IF NOT EXISTS `acl_role_privilege` (
+    `id` char(19) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '主键id',
+    `role_id` char(19) NOT NULL COMMENT '角色id',
+    `site_id` char(19) DEFAULT NULL COMMENT '应用id',
+    `component_id` char(19) DEFAULT NULL COMMENT '服务组件id',
+    `privilege_key` varchar(36) DEFAULT NULL COMMENT '鉴权值',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT='角色授权' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_serve_component`
+--
+
+DROP TABLE IF EXISTS `acl_serve_component`;
+CREATE TABLE IF NOT EXISTS `acl_serve_component` (
+    `id` char(19) NOT NULL COMMENT '组件id',
+    `key_name` varchar(36) NOT NULL COMMENT '组件名称',
+    `title` varchar(50) NOT NULL COMMENT '组件显示名',
+    `status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '状态 1在线，0不在线，2维护不可用',
+    `hook_protocol` varchar(28) NOT NULL COMMENT 'Hookd地址访问协议',
+    `end_point` varchar(255) NOT NULL COMMENT 'Hook地址',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `component_key` (`key_name`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='服务组件' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_site`
+--
+
+DROP TABLE IF EXISTS `acl_site`;
+CREATE TABLE IF NOT EXISTS `acl_site` (
+    `id` char(19) NOT NULL COMMENT '主键id',
+    `site_key` varchar(36) NOT NULL COMMENT '应用值',
+    `site_name` varchar(48) NOT NULL COMMENT '应用站点名',
+    `return_page_url` varchar(255) NOT NULL COMMENT '登录后默认跳转地址',
+    `default_flag` tinyint(4) NOT NULL DEFAULT '0' COMMENT '是否为默认应用：0 否，1 是',
+    `secret` varchar(36) NOT NULL,
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='应用' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_site_component`
+--
+
+DROP TABLE IF EXISTS `acl_site_component`;
+CREATE TABLE IF NOT EXISTS `acl_site_component` (
+    `id` char(19) NOT NULL COMMENT '主键id',
+    `site_id` char(19) NOT NULL COMMENT '应用id',
+    `component_id` char(19) NOT NULL COMMENT '服务组件id',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `site_id` (`site_id`,`component_id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='应用可访问服务组件表' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_site_role`
+--
+
+DROP TABLE IF EXISTS `acl_site_role`;
+CREATE TABLE IF NOT EXISTS `acl_site_role` (
+    `id` char(19) NOT NULL COMMENT '主键id',
+    `component_id` char(19) NOT NULL COMMENT '服务组件id',
+    `site_id` char(19) NOT NULL COMMENT '应用id',
+    `component_role_key` varchar(36) NOT NULL COMMENT '服务组件角色key',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_site_role_menu`
+--
+
+DROP TABLE IF EXISTS `acl_site_role_menu`;
+CREATE TABLE IF NOT EXISTS `acl_site_role_menu` (
+    `id` char(19) NOT NULL COMMENT 'id',
+    `site_id` char(19) NOT NULL COMMENT '应用id',
+    `component_role_key` varchar(36) NOT NULL COMMENT '服务组件角色key',
+    `function_id` char(19) DEFAULT NULL COMMENT '功能模块id',
+    `menu_id` char(19) DEFAULT NULL COMMENT '菜单id',
+    `operate_id` char(19) DEFAULT NULL COMMENT '操作项id',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_site_role_privilege`
+--
+
+DROP TABLE IF EXISTS `acl_site_role_privilege`;
+CREATE TABLE IF NOT EXISTS `acl_site_role_privilege` (
+    `id` char(19) NOT NULL COMMENT 'id',
+    `component_id` char(19) NOT NULL COMMENT '服务组件id',
+    `site_id` char(19) NOT NULL COMMENT '应用id',
+    `component_role_key` varchar(36) NOT NULL COMMENT '服务组件角色key',
+    `privilege_group_key` varchar(36) DEFAULT NULL COMMENT '鉴权分组值',
+    `privilege_key` varchar(36) DEFAULT NULL COMMENT '鉴权值',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='应用角色鉴权表' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_site_user`
+--
+
+DROP TABLE IF EXISTS `acl_site_user`;
+CREATE TABLE IF NOT EXISTS `acl_site_user` (
+    `id` char(19) NOT NULL COMMENT '主键id',
+    `user_id` char(19) NOT NULL COMMENT '用户id',
+    `site_id` char(19) NOT NULL COMMENT '应用id',
+    `status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '账号状态：1 有效，0无效',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `user_id` (`user_id`,`site_id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='应用用户' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_site_user_role`
+--
+
+DROP TABLE IF EXISTS `acl_site_user_role`;
+CREATE TABLE IF NOT EXISTS `acl_site_user_role` (
+    `id` char(19) NOT NULL COMMENT '主键id',
+    `user_id` char(19) NOT NULL COMMENT '用户id',
+    `site_id` char(19) NOT NULL COMMENT '应用id',
+    `component_role_key` varchar(36) NOT NULL COMMENT '服务组件角色key',
+    `status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '角色状态(1 已启用，0未启用）',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='应用用户角色表' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_user`
+--
+
+DROP TABLE IF EXISTS `acl_user`;
+CREATE TABLE IF NOT EXISTS `acl_user` (
+    `id` char(19) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '会员id',
+    `role_id` char(19) NOT NULL COMMENT '角色id',
+    `built_in_flag` tinyint(4) DEFAULT '0' COMMENT '是否内置 1.是，0.否',
+    `username` varchar(20) NOT NULL DEFAULT '' COMMENT '用户名',
+    `password` varchar(32) NOT NULL DEFAULT '' COMMENT '密码',
+    `real_name` varchar(28) DEFAULT NULL COMMENT '用户姓名',
+    `email` varchar(36) DEFAULT NULL COMMENT '邮箱',
+    `mobile` varchar(16) DEFAULT NULL COMMENT '用户手机号',
+    `status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '用户状态(1 正常，0冻结）',
+    `last_time` datetime DEFAULT NULL COMMENT '最后登录时间',
+    `Ip_addr` varchar(15) DEFAULT NULL COMMENT '最后登录ip',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `pw_update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '密码最后一次修改时间',
+    `pw_invalid_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '密码失效时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `uk_username` (`username`) USING BTREE
+    ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT='用户' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `acl_user_role`
+--
+
+DROP TABLE IF EXISTS `acl_user_role`;
+CREATE TABLE IF NOT EXISTS `acl_user_role` (
+    `id` char(19) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '主键id',
+    `role_id` char(19) NOT NULL COMMENT '角色id',
+    `user_id` char(19) NOT NULL COMMENT '用户id',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    KEY `idx_role_id` (`role_id`) USING BTREE,
+    KEY `idx_user_id` (`user_id`) USING BTREE
+    ) ENGINE=InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `alarm_log_colums`
+--
+
+DROP TABLE IF EXISTS `alarm_log_colums`;
+CREATE TABLE IF NOT EXISTS `alarm_log_colums` (
+    `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `log_key` varchar(255) DEFAULT NULL,
+    `log_name` varchar(255) DEFAULT NULL,
+    `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更改时间',
+    `create_by` varchar(255) DEFAULT NULL COMMENT '创建者',
+    `update_by` varchar(255) DEFAULT NULL COMMENT '修改者',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `alarm_rule`
+--
+
+DROP TABLE IF EXISTS `alarm_rule`;
+CREATE TABLE alarm_rule (
+                            id int NOT NULL AUTO_INCREMENT,
+                            rule_name varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '告警规则名称',
+                            rule_type int DEFAULT NULL COMMENT '规则类型',
+                            risk_level_id int DEFAULT NULL COMMENT '风险等级ID',
+                            notice_way_flag int DEFAULT NULL COMMENT '1邮件 2 SYQLOG 3站内消息',
+                            notice_way varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '告警规则名称',
+                            notice_obj varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '收件人账号',
+                            is_valid int DEFAULT NULL COMMENT '是否有效，0：有效，1：无效',
+                            create_time datetime DEFAULT NULL COMMENT '创建时间',
+                            update_time datetime DEFAULT NULL COMMENT '修改时间',
+                            create_by varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '创建者',
+                            update_by varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '修改者',
+                            condition_key int DEFAULT NULL COMMENT '2-cpu、3-disk、4-mem',
+                            condition_value int DEFAULT NULL COMMENT '阈值',
+                            PRIMARY KEY (id) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 8 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `audit_rule`
+--
+
+DROP TABLE IF EXISTS `audit_rule`;
+CREATE TABLE IF NOT EXISTS `audit_rule` (
+    `audit_rule_id` int(0) NOT NULL AUTO_INCREMENT COMMENT '规则主键id',
+    `rule_name` varchar(50) NOT NULL COMMENT '规则名称',
+    rule_desc text NULL COMMENT '规则描述',
+    `risk_id` int(0) NOT NULL COMMENT '风险等级ID',
+    `risk_type` tinyint(0) COMMENT '风险类型：1.安全攻击，2.数据泄露，3.非法访问，4.管理缺陷',
+    `protection_status` tinyint(0) NOT NULL DEFAULT 0 COMMENT '防护状态：0：关闭 1：开启',
+    `type` tinyint(0) NOT NULL DEFAULT 1 COMMENT '类型：0：内置，1：自定义',
+    `audit_type` tinyint(0) NULL DEFAULT 0 COMMENT '审计类型',
+    `start_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '防护状态开启时间',
+    `is_deleted` tinyint(0) NOT NULL DEFAULT 0 COMMENT '是否删除（0：正常，1;删除）',
+    `create_by` varchar(50) NULL DEFAULT NULL COMMENT '创建者',
+    `update_by` varchar(50) NULL DEFAULT NULL COMMENT '更新者',
+    `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+    `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+    `site_id` varchar(50) NULL DEFAULT NULL COMMENT '应用id',
+    `parent_rule_id` int(0) NULL DEFAULT -1 COMMENT '父类的规则ID（策略复制，策略下发应用生成）',
+    `is_parameter` tinyint(0) NULL DEFAULT 0 COMMENT '参数配置 1：有，0：无',
+    `attack_potential` varchar(50) NULL DEFAULT NULL COMMENT '攻击可能性-弱点评估',
+    `check_accuracy_weakness` varchar(50) NULL DEFAULT NULL COMMENT '检测准确性-弱点评估',
+    `threaten` tinyint(1) NULL DEFAULT 0 COMMENT '威胁性-风险检测',
+    `check_accuracy_risk` tinyint(1) NULL DEFAULT 0 COMMENT '检测准确性-风险检测',
+    `reference` varchar(255) NULL DEFAULT NULL COMMENT '参考说明',
+    `condition_value` varchar(255) NULL DEFAULT NULL COMMENT '配置参数',
+    `problem_causes` varchar(255) NULL DEFAULT NULL COMMENT '问题原因',
+    PRIMARY KEY (`audit_rule_id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='审计规则表' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `audit_rule_condition_rel`
+--
+
+DROP TABLE IF EXISTS `audit_rule_condition_rel`;
+CREATE TABLE IF NOT EXISTS `audit_rule_condition_rel` (
+    `rule_condition_rel_id` int(0) NOT NULL AUTO_INCREMENT COMMENT '关联表主键id',
+    `audit_rule_id` int(0) NOT NULL COMMENT '规则id',
+    `condition_key` varchar(50) NULL DEFAULT NULL COMMENT '判定条件',
+    `logical_operator` varchar(20) NULL DEFAULT NULL COMMENT '逻辑符',
+    `real_condition` text NOT NULL COMMENT '真实条件值',
+    `condition_value` text NULL COMMENT '判定条件值',
+    `is_deleted` tinyint(0) NOT NULL DEFAULT 0 COMMENT '是否删除（0：正常，1;删除）',
+    `create_by` varchar(50) NULL DEFAULT NULL COMMENT '创建者',
+    `update_by` varchar(50) NULL DEFAULT NULL COMMENT '更新者',
+    `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+    `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+    `is_default` tinyint(0) NULL DEFAULT 0 COMMENT '是否是默认值全局（0：默认，1：自定义）',
+    `parent_id` int(0) NULL DEFAULT -1 COMMENT '父类的条件ID（策略复制，策略下发应用生成）',
+    `param_unit` varchar(50) NULL DEFAULT NULL COMMENT '参数单位',
+    `param_type` varchar(50) NULL DEFAULT NULL COMMENT '参数类型',
+    `param_src` varchar(50) NULL DEFAULT NULL COMMENT '参数来源',
+    `default_condition` text NULL DEFAULT NULL COMMENT '默认值',
+    PRIMARY KEY (`rule_condition_rel_id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='审计规则和条件关联表' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `audit_strategy`
+--
+DROP TABLE IF EXISTS `audit_strategy`;
+CREATE TABLE audit_strategy  (
+                                 `id` int(0) NOT NULL AUTO_INCREMENT COMMENT '策略ID',
+                                 `strategy_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '策略名称',
+                                 strategy_describe text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '策略描述',
+                                 `type` tinyint(0) NOT NULL DEFAULT 2 COMMENT '类型：1：内置，2：自定义',
+                                 `data_source` tinyint(0) NOT NULL COMMENT '数据来源（1：策略模块，2：全局策略，3：安全策略）',
+                                 `is_valid` tinyint(0) NOT NULL DEFAULT 0 COMMENT '是否有效（0：有效，1;无效）',
+                                 `is_deleted` tinyint(0) NOT NULL DEFAULT 0 COMMENT '是否删除（0：正常，1;删除）',
+                                 `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '创建者',
+                                 `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '更新者',
+                                 `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                                 `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                                 `is_built` tinyint(0) NULL DEFAULT 1 COMMENT '是代码审计 还是正则审计。0：代码 1：正则',
+                                 `parent_id` tinyint(0) NULL DEFAULT -1 COMMENT '父类的策略ID（策略复制，策略下发应用生成）',
+                                 PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 140 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `date_config`
+--
+
+DROP TABLE IF EXISTS `date_config`;
+CREATE TABLE IF NOT EXISTS `date_config` (
+    `id` int(11) NOT NULL,
+    `current_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '当前时间',
+    `set_way` varchar(255) DEFAULT NULL COMMENT '设置方式，0代表手动设置方式，1代表从时间服务器同步方式',
+    `set_time` datetime DEFAULT NULL COMMENT '设置时间',
+    `server_ip_address` varchar(255) DEFAULT NULL COMMENT '服务器IP地址',
+    `port` varchar(255) DEFAULT NULL COMMENT '端口号',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `message_receiver_detail`
+--
+
+DROP TABLE IF EXISTS `message_receiver_detail`;
+CREATE TABLE IF NOT EXISTS `message_receiver_detail` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `notice_way_flag` tinyint(4) DEFAULT NULL COMMENT '1:邮件  2：syslog  3：站内消息',
+    `mail_num` varchar(255) DEFAULT NULL COMMENT '发件人账号',
+    `mail_psw` varchar(255) DEFAULT NULL COMMENT '发件人密码',
+    `host` varchar(255) DEFAULT NULL COMMENT '邮箱服务器地址',
+    `port` int(11) DEFAULT NULL COMMENT '邮箱服务器端口',
+    `is_valid` tinyint(4) NOT NULL DEFAULT '0' COMMENT '开关   0：开    1：关',
+    `name` varchar(255) DEFAULT NULL COMMENT '通知方式名称',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `risk_level`
+--
+
+DROP TABLE IF EXISTS `risk_level`;
+CREATE TABLE `risk_level`  (
+                               `id` int(0) NOT NULL AUTO_INCREMENT COMMENT '风险id',
+                               `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '风险等级名称',
+                               `is_valid` tinyint(0) NOT NULL DEFAULT 0 COMMENT '是否有效（0：有效，1;无效）',
+                               `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '创建者',
+                               `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '更新者',
+                               `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                               `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                               PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+-- --------------------------------------------------------
+
+
+DROP TABLE IF EXISTS `api_check_job`;
+CREATE TABLE IF NOT EXISTS `api_check_job` (
+    `id` varchar(64) NOT NULL  COMMENT '主键',
+    `app_id` varchar(64) NOT NULL COMMENT '应用ID',
+    `job_status` int(0) COMMENT '任务状态：0-初始，1-进行中，2-停止，3-结束',
+    `start_time` datetime ,
+    `check_type` int(0) COMMENT '监测类型：0-弱点评估，1-风险监测',
+    `period_length` int(0) COMMENT '任务周期长度',
+    `execute_mode` tinyint(0) COMMENT '执行方式：0-单次，1-反复',
+    `job_interval` int(0) COMMENT '任务执行间隔',
+    `disabled` int(0) DEFAULT 0 COMMENT '是否禁用：0-正常，1-禁用',
+    `is_deleted` tinyint(0) NOT NULL COMMENT '状态：0-正常，1-已删除',
+    `create_by` varchar(50) DEFAULT NULL COMMENT '创建者',
+    `update_by` varchar(50) DEFAULT NULL COMMENT '更新者',
+    `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='弱点检测任务表' ROW_FORMAT=DYNAMIC;
+
+--
+-- 表的结构 `schedule_job`
+--
+
+DROP TABLE IF EXISTS `schedule_job`;
+CREATE TABLE IF NOT EXISTS `schedule_job` (
+    `job_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '任务id',
+    `bean_name` varchar(200) DEFAULT NULL COMMENT 'spring bean名称',
+    `method_name` varchar(20) DEFAULT NULL COMMENT '方法名',
+    `params` varchar(2000) DEFAULT NULL COMMENT '参数',
+    `cron_expression` varchar(100) DEFAULT NULL COMMENT 'cron表达式',
+    `status` tinyint(4) DEFAULT NULL COMMENT '任务状态  0：正常  1：暂停',
+    `remark` varchar(255) DEFAULT NULL COMMENT '备注',
+    `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+    PRIMARY KEY (`job_id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='定时任务' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `schedule_job_log`
+--
+
+DROP TABLE IF EXISTS `schedule_job_log`;
+CREATE TABLE IF NOT EXISTS `schedule_job_log` (
+    `log_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '任务日志id',
+    `job_id` bigint(20) NOT NULL COMMENT '任务id',
+    `bean_name` varchar(200) DEFAULT NULL COMMENT 'spring bean名称',
+    `params` varchar(2000) DEFAULT NULL COMMENT '参数',
+    `status` tinyint(4) NOT NULL COMMENT '任务状态    0：成功    1：失败',
+    `error` varchar(2000) DEFAULT NULL COMMENT '失败信息',
+    `times` int(11) NOT NULL COMMENT '耗时(单位：毫秒)',
+    `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+    PRIMARY KEY (`log_id`) USING BTREE,
+    KEY `job_id` (`job_id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='定时任务日志' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `sensitive_api_info`
+--
+
+DROP TABLE IF EXISTS `sensitive_api_info`;
+CREATE TABLE `sensitive_api_info`  (
+                                       `id` char(19) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '主键id',
+                                       `plan_id` char(64)  NOT NULL COMMENT '应用id',
+                                       `task_id` char(64)  NOT NULL COMMENT '计划id',
+                                       `site_id` char(64)  NOT NULL COMMENT '任务id',
+                                       `interface_id` char(64) NOT NULL DEFAULT '0' COMMENT '接口id',
+                                       `path` varchar(255) NOT NULL DEFAULT '' COMMENT '路径',
+                                       `interface_name` varchar(255) NOT NULL DEFAULT '0' COMMENT 'api名称',
+                                       `interface_method` varchar(6)  NOT NULL COMMENT 'api类型',
+                                       `finish_status` tinyint(0) NOT NULL DEFAULT 0 COMMENT '完成状态：0 未完成，1 已完成',
+                                       `is_keep_record` tinyint(0) NOT NULL DEFAULT 0 COMMENT '收录：0 未收录，1 收录',
+                                       `scan_count` int(0) NULL DEFAULT 0 COMMENT '扫描次数',
+                                       `sample_amount` int(0) NOT NULL DEFAULT 0 COMMENT '采样数量',
+                                       `sensitive_param_amount` int(0) NOT NULL DEFAULT 0 COMMENT '涉敏参数 数量',
+                                       sensitive_types varchar(255) COMMENT '敏感类型',
+                                        `scan_param_amount` int(0) NOT NULL COMMENT '已扫描参数',
+                                       `create_time` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                                       `update_time` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                                       `delete_flag` tinyint(0) NOT NULL DEFAULT 0 COMMENT '删除标识：1.已删除，0.正常',
+                                       `finish_time` datetime(0) NULL DEFAULT NULL COMMENT '任务的结束时间',
+                                       PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+
+DROP TABLE IF EXISTS `sensitive_plan_task`;
+CREATE TABLE IF NOT EXISTS `sensitive_plan_task` (
+    `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `plan_id` varchar(255) NOT NULL COMMENT '计划ID',
+    `task_id` varchar(255) NOT NULL COMMENT '任务ID',
+    `site_id` varchar(128) NOT NULL COMMENT '服务ID',
+    `scan_count` int NOT NULL COMMENT '扫描次数',
+    `start_time` varchar(255) COMMENT '开始时间',
+    `end_time` varchar(255) COMMENT '结束时间',
+    `task_status` tinyint(4) DEFAULT '0' COMMENT '任务状态:0:-,1:待执行，2：执行中，3：已完成，4：已结束',
+    `is_deleted` tinyint(4) DEFAULT '0' COMMENT '是否删除',
+    `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='计划任务关联表' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `sensitive_comb`
+--
+
+DROP TABLE IF EXISTS `sensitive_comb`;
+CREATE TABLE `sensitive_comb`  (
+                                   `id` char(19) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '主键id',
+                                   `plan_id` varchar(64) NOT NULL COMMENT '计划ID',
+                                   `task_id` varchar(64)  NOT NULL COMMENT '任务ID',
+                                   `sensitive_type_id` char(19)  NULL DEFAULT NULL COMMENT '敏感类型id',
+                                   `sensitive_data_id` char(19)  NULL DEFAULT NULL COMMENT '敏感数据id',
+                                   `site_id` char(64)  NOT NULL COMMENT '应用id',
+                                   `param_type` tinyint(0) NULL DEFAULT NULL COMMENT '参数类型：1.请求参数，2.返回参数',
+                                   `param` varchar(200)  NOT NULL DEFAULT '0' COMMENT '参数',
+                                   `owned_api` varchar(255)  NOT NULL COMMENT '所属api',
+                                   `interface_id` varchar(64)  NOT NULL DEFAULT '0' COMMENT '接口id',
+                                   `match_amount` int(0) NOT NULL DEFAULT 0 COMMENT '匹配数量',
+                                   `verify_status` tinyint(0) NOT NULL DEFAULT 0 COMMENT '核实状态：0未核实，1未修正，2已核实',
+                                   `verify_time` datetime(0) NULL DEFAULT NULL COMMENT '核实时间',
+                                   `data_status` tinyint(0) NOT NULL DEFAULT 0 COMMENT '数据状态：1新数据，2旧数据',
+                                   `delete_flag` tinyint(0) NOT NULL DEFAULT 0 COMMENT '删除标识：1.已删除，0.正常',
+                                   `sensitive_flag` tinyint(0) NOT NULL DEFAULT 0 COMMENT '敏感标识：0.非敏感，1.敏感',
+                                   `sample_txt` text NULL COMMENT '样本',
+                                   `category_ids` varchar(150)  NULL DEFAULT NULL COMMENT '分类集合',
+                                   `level_id` int(0) NULL DEFAULT NULL COMMENT '分级',
+                                   `is_keep_record` tinyint(0) NOT NULL DEFAULT 0 COMMENT '是否收录：0未收录，1收录',
+                                   `old_sensitive_type_id` char(19)  NULL DEFAULT NULL COMMENT '原敏感类型：用于修正状态的参数',
+                                   `old_sensitive_data_id` char(19)  NULL DEFAULT NULL COMMENT '原敏感数据：用于修正状态的参数',
+                                   `tmp_sensitive_type_id` char(19)  NULL DEFAULT NULL COMMENT '临时敏感特征id',
+                                   `tmp_sensitive_data_id` char(19)  NULL DEFAULT NULL COMMENT '临时敏感数据id',
+                                   is_new_param tinyint(0) NULL DEFAULT NULL COMMENT '是否新参数：0.新增参数，2.旧参数',
+                                   `is_auto` tinyint(0) NULL DEFAULT NULL COMMENT '是否手动：0.自动，1.手动',
+                                   category_time datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '分类时间',
+                                   level_time datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '分级时间',
+                                   `manager_verify_status` tinyint(0) default 0 COMMENT '参数来源:0:任务，1：api编辑',
+                                   `create_time` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                                   `update_time` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                                   PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+CREATE TABLE `sensitive_data`  (
+                                   `id` int(0) NOT NULL AUTO_INCREMENT COMMENT '主键',
+                                   `sensitive_data` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '敏感数据',
+                                   `sensitive_type_id` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '敏感特征主键',
+                                   `source` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0' COMMENT '来源:0:当前页面，1：数据模型',
+                                   `category_ids` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '分类标准ID',
+                                   `level_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '分级',
+                                   category_time datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '分类时间',
+                                   level_time datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '分级时间',
+                                   `is_deleted` tinyint(0) NULL DEFAULT 0 COMMENT '是否删除',
+                                   `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '创建者',
+                                   `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '更新者',
+                                   `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                                   `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                                   PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '敏感数据表' ROW_FORMAT = Dynamic;
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `sensitive_scan_task`
+--
+
+DROP TABLE IF EXISTS `sensitive_scan_task`;
+CREATE TABLE `sensitive_scan_task`  (
+                                        `id` char(19) NOT NULL DEFAULT '' COMMENT '主键id',
+                                        `site_ids` VARCHAR(255) COMMENT '应用id',
+                                        `site_names` VARCHAR(255) COMMENT '应用名称',
+                                        `plan_name` char(64) NOT NULL COMMENT '应用id',
+                                        `task_status` tinyint(0) NOT NULL DEFAULT 0 COMMENT '任务状态：0.未开启，1.待执行，2.执行中，3.已完成，4.已停止',
+                                        `sample_amount` int(0) NOT NULL COMMENT '采样数：100-10000',
+                                        `scan_range` tinyint(0) NOT NULL COMMENT '扫描范围：1.全部API 2.未扫描API',
+                                        `scan_location` tinyint(0) NOT NULL COMMENT '扫描位置：0.全部  1.请求体  2.响应体',
+                                        `scan_count` int(0) NULL DEFAULT 0 COMMENT '扫描次数',
+                                        `task_type` tinyint(0) NOT NULL COMMENT '任务类型：1.预定时间，2.循环时间',
+                                        `start_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '开启时间',
+                                        `end_time` datetime(0) NULL DEFAULT NULL COMMENT '结束时间',
+                                        `time_type` tinyint(0) NULL DEFAULT NULL COMMENT '时间类型：1.按天，2.按星期，3.按月',
+                                        `day_of_week` tinyint(0) NULL DEFAULT NULL COMMENT '星期：1.星期日，2.星期一..',
+                                        `day_of_month` tinyint(0) NULL DEFAULT NULL COMMENT '号：1-31',
+                                        `hour` tinyint(0) NULL DEFAULT NULL COMMENT '时',
+                                        `minute` tinyint(0) NULL DEFAULT NULL COMMENT '分',
+                                        `delete_flag` tinyint(0) NOT NULL DEFAULT 0 COMMENT '删除标识：1.已删除，0.正常',
+                                        `create_time` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                                        `update_time` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                                        `create_by` varchar(50) NULL DEFAULT NULL COMMENT '创建者',
+                                        `update_by` varchar(50) NULL DEFAULT NULL COMMENT '更新者',
+                                        PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB  ROW_FORMAT = Dynamic;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `sensitive_scan_task_detail`
+--
+
+DROP TABLE IF EXISTS `sensitive_scan_task_detail`;
+CREATE TABLE IF NOT EXISTS `sensitive_scan_task_detail` (
+    `id` char(19) NOT NULL DEFAULT '' COMMENT '主键id',
+    `plan_id` char(19) NOT NULL COMMENT '扫描计划id',
+    `sensitive_type_id` char(19) NOT NULL COMMENT '规则id',
+    `delete_flag` tinyint(4) NOT NULL DEFAULT '0' COMMENT '删除标识：1.已删除，0.正常',
+    `analyze_ratio` double DEFAULT NULL COMMENT '判定比列：0~100',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `create_by` varchar(50) DEFAULT NULL COMMENT '创建者',
+    `update_by` varchar(50) DEFAULT NULL COMMENT '更新者',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `sensitive_type`
+--
+
+DROP TABLE IF EXISTS `sensitive_type`;
+CREATE TABLE `sensitive_type`  (
+                                   `id` char(19) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '菜单id',
+                                   `rule_name` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '规则名称',
+                                   `type` tinyint(0) NOT NULL DEFAULT 2 COMMENT '类别：1内置，2自定义',
+                                   `match_type` tinyint(0) NOT NULL COMMENT '匹配类型：1正则，2文本，3枚举',
+                                   `analyze_condition` tinyint(0) NOT NULL DEFAULT 2 COMMENT '判定条件：1参数正则，2返回值正则',
+                                   `regular_expression` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '正则表达式',
+                                   `analyze_ratio` double NULL DEFAULT NULL COMMENT '判定比列：0~100',
+                                   `delete_flag` tinyint(0) NOT NULL DEFAULT 0 COMMENT '删除标识：1.已删除，0.正常',
+                                   `create_time` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                                   `update_time` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                                   `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '创建者',
+                                   `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '更新者',
+                                   PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `strategy_site_rel`
+--
+
+DROP TABLE IF EXISTS `strategy_site_rel`;
+CREATE TABLE IF NOT EXISTS `strategy_site_rel` (
+    `id` int(0) NOT NULL AUTO_INCREMENT COMMENT '规则下发应用表主键id',
+    `site_id` varchar(50) NOT NULL COMMENT '应用id',
+    `is_deleted` tinyint(0) NOT NULL DEFAULT 0 COMMENT '是否删除（0：正常，1;删除）',
+    `create_by` varchar(50) NULL DEFAULT NULL COMMENT '创建者',
+    `update_by` varchar(50) NULL DEFAULT NULL COMMENT '更新者',
+    `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+    `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+    `audit_configure` tinyint(0) NULL DEFAULT 0 COMMENT '审计配置 0：无配置，1：全流量审计记录 2：基于规则进行审计记录,3:豁免审计规则',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='规则下发应用表' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `sys_backup_log`
+--
+
+DROP TABLE IF EXISTS `sys_backup_log`;
+CREATE TABLE IF NOT EXISTS `sys_backup_log` (
+    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '备份记录ID 主键',
+    `version` varchar(64) NOT NULL DEFAULT '' COMMENT '备份文件版本号(系统版本号)',
+    `file_id` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '备份文件ID',
+    `status` tinyint(3) UNSIGNED NOT NULL DEFAULT '0' COMMENT '备份状态 0备份中，1备份失败，2备份成功',
+    `user_id` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '操作人ID',
+    `deleted` tinyint(3) UNSIGNED NOT NULL DEFAULT '0' COMMENT '是否已删除 0否，1是',
+    `create_time` bigint(20) NOT NULL DEFAULT '0' COMMENT '创建时间 用户确认备份的时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='备份记录表 ' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `sys_captcha`
+--
+
+DROP TABLE IF EXISTS `sys_captcha`;
+CREATE TABLE IF NOT EXISTS `sys_captcha` (
+    `uuid` char(36) NOT NULL COMMENT 'uuid',
+    `code` varchar(6) NOT NULL COMMENT '验证码',
+    `expire_time` datetime DEFAULT NULL COMMENT '过期时间',
+    PRIMARY KEY (`uuid`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统验证码' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `sys_config`
+--
+DROP TABLE IF EXISTS `sys_config`;
+CREATE TABLE `sys_config` (
+                              `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT  COMMENT 'ID 主键' ,
+                              `device_type` TINYINT(1) UNSIGNED NOT NULL  DEFAULT 0 COMMENT '服务器类型 0物理机，1虚拟机' ,
+                              `device_no` VARCHAR(64) NOT NULL  DEFAULT '' COMMENT '服务器型号' ,
+                              `device_sn` VARCHAR(64) NOT NULL  DEFAULT '' COMMENT '服务器SN码' ,
+                              `device_info` VARCHAR(256) NOT NULL  DEFAULT '' COMMENT '服务器信息' ,
+                              `oem_type` TINYINT(2) UNSIGNED NOT NULL  DEFAULT 0 COMMENT 'OEM厂商类型 0中安星云，1山石，2天融信，3奇安信' ,
+                              `auth_status` TINYINT(1) UNSIGNED NOT NULL  DEFAULT 0 COMMENT '授权状态 0未授权，1已授权，2已过期' ,
+                              `auth_license` VARCHAR(2048) NOT NULL  DEFAULT '' COMMENT '授权证书信息 JSON格式表示' ,
+                              `auth_detail` VARCHAR(2048) NOT NULL  DEFAULT '' COMMENT '授权详细配置 JSON格式表示' ,
+                              `auth_time` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '授权时间' ,
+                              `auth_expire` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '授权到期时间' ,
+                              `version` VARCHAR(256) NOT NULL  DEFAULT '' COMMENT '外部版本号' ,
+                              `sys_name` VARCHAR(256) NOT NULL  DEFAULT '' COMMENT '系统名称' ,
+                              `sys_no` VARCHAR(256) NOT NULL  DEFAULT '' COMMENT '产品型号' ,
+                              `sys_init_version` VARCHAR(64) NOT NULL  DEFAULT '' COMMENT '系统初始版本号' ,
+                              `sys_version` VARCHAR(64) NOT NULL  DEFAULT '' COMMENT '系统当前版本号' ,
+                              `sys_lang` TINYINT(1) UNSIGNED NOT NULL  DEFAULT 0 COMMENT '系统语言包类型 0简体中文，1繁体中文，2英文' ,
+                              `sys_status` TINYINT(1) UNSIGNED NOT NULL  DEFAULT 0 COMMENT '系统状态 0未启动，1已启动，2升级中' ,
+                              `first_start_time` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '系统首次启动时间' ,
+                              `last_start_time` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '系统最近一次启动时间' ,
+                              `start_num` SMALLINT(4) NOT NULL  DEFAULT 0 COMMENT '系统累计启动次数' ,
+                              `data_space_capacity` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '数据存储空间总容量 单位：KB' ,
+                              `data_space_usage` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '数据存储空间已使用量 单位：KB' ,
+                              `data_space_threshold` TINYINT(3) NOT NULL  DEFAULT 0 COMMENT '数据存储空间告警阈值 单位：%' ,
+                              `backup_space_capacity` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '备份存储空间总容量 单位：KB' ,
+                              `backup_space_usage` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '备份存储空间已使用量 单位：KB' ,
+                              `backup_space_threshold` TINYINT(3) NOT NULL  DEFAULT 0 COMMENT '备份存储空间告警阈值 单位：%' ,
+                              `log_space_capacity` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '日志存储空间总容量 单位：KB' ,
+                              `log_space_usage` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '日志存储空间已使用量 单位：KB' ,
+                              `log_space_threshold` TINYINT(3) NOT NULL  DEFAULT 0 COMMENT '日志存储空间告警阈值 单位：%' ,
+                              `disk_capacity` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '硬盘总容量 单位：KB' ,
+                              `disk_usage` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '硬盘已使用量 单位：KB' ,
+                              `disk_threshold` TINYINT(3) NOT NULL  DEFAULT 0 COMMENT '硬盘使用率告警阈值 单位：%' ,
+                              `cpu_usage` DECIMAL(5,2) NOT NULL  DEFAULT 0 COMMENT 'CPU当前使用率 单位：%' ,
+                              `cpu_threshold` TINYINT(3) NOT NULL  DEFAULT 0 COMMENT 'CPU使用率告警阈值 单位：%' ,
+                              `cpu_threshold_time` SMALLINT(4) NOT NULL  DEFAULT 0 COMMENT 'CPU使用率达到阈值持续时间 持续超过该时间后触发告警，单位：秒' ,
+                              `mem_capacity` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '内存总大小 单位：KB' ,
+                              `mem_usage` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '内存当前使用量 单位：KB' ,
+                              `mem_threshold` TINYINT(3) NOT NULL  DEFAULT 0 COMMENT '内存使用率告警阈值 单位：%' ,
+                              `mem_threshold_time` SMALLINT(4) NOT NULL  DEFAULT 0 COMMENT '内存使用率达到阈值持续时间 持续超过该时间后触发告警，单位：秒' ,
+                              `disk_write` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '磁盘当前写入速率 单位：KB/s' ,
+                              `disk_read` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '磁盘当前读取速率 单位：KB/s' ,
+                              `if_in` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '网络当前上行速率 单位：KB/s' ,
+                              `if_out` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '网络当前下行速率 单位：KB/s' ,
+                              `login_model` tinyint(1) UNSIGNED NOT NULL  DEFAULT 0 COMMENT '登录模式：0 普通，1 仅SSO，2 兼容',
+                              `sso_url` varchar(1024) NOT NULL   DEFAULT '' COMMENT 'SSO服务地址',
+                              `sso_app_id` varchar(256) NOT NULL DEFAULT '' COMMENT 'SSO分配的应用ID',
+                              `sso_app_secret` varchar(256) NOT NULL  DEFAULT '' COMMENT 'SSO分配的应用密钥',
+                              `data_status` tinyint(1) NOT NULL  DEFAULT 0 COMMENT '数据联动是否开启:0 否 1 是',
+                              `dfw_url` varchar(1024) NOT NULL  DEFAULT '' COMMENT '审计防火墙设备地址',
+                              `update_time` BIGINT(20) NOT NULL  DEFAULT 0 COMMENT '更新时间' ,
+                              PRIMARY KEY (`id`)
+) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci COMMENT = '系统基础配置表 ';
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `sys_superior`;
+CREATE TABLE `sys_superior` (
+                                `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
+                                `pn` varchar(64) NOT NULL DEFAULT '' COMMENT '平台产品序列号',
+                                `device_id` int unsigned NOT NULL DEFAULT '0' COMMENT '注册ID号',
+                                `status` tinyint unsigned NOT NULL DEFAULT '0' COMMENT '启用状态：0未启用，1已启用',
+                                `log_status` tinyint unsigned NOT NULL DEFAULT '0' COMMENT '上传日志任务状态：0未开启，1已开启',
+                                `host_ip` varchar(128) NOT NULL DEFAULT '' COMMENT '本地接口IP',
+                                `remote_ip` varchar(128) NOT NULL DEFAULT '' COMMENT '远程接口IP',
+                                `remote_port` smallint unsigned NOT NULL DEFAULT '0' COMMENT '远程接口端口号',
+                                `remote_ssl` tinyint unsigned NOT NULL DEFAULT '0' COMMENT '远程接口是否使用HTTPS：0否，1是',
+                                `cycle` smallint unsigned NOT NULL DEFAULT '0' COMMENT '心跳频率间隔，单位：秒',
+                                `queue_config` text COMMENT '日志采集器配置信息',
+                                `sync_time` bigint NOT NULL DEFAULT '0' COMMENT '最近一次同步时间',
+                                `update_time` bigint NOT NULL DEFAULT '0' COMMENT '更新时间',
+                                `create_time` bigint NOT NULL DEFAULT '0' COMMENT '创建时间',
+                                PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='受控的管理平台配置信息表';
+
+DROP TABLE IF EXISTS `sys_setting`;
+CREATE TABLE `sys_setting` (
+                               `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
+                               `sys_name` varchar(256) NOT NULL DEFAULT '' COMMENT '系统名称',
+                               `pro_name` varchar(256) NOT NULL DEFAULT '' COMMENT '产品名称',
+                               `company` varchar(256) NOT NULL DEFAULT '' COMMENT '公司名称',
+                               `sn` varchar(128) NOT NULL DEFAULT '' COMMENT 'SN号',
+                               `hardware` varchar(64) NOT NULL DEFAULT '' COMMENT '硬件型号',
+                               `oem` varchar(64) NOT NULL DEFAULT '' COMMENT 'OEM标识号',
+                               `version` varchar(64) NOT NULL DEFAULT '' COMMENT '版本号',
+                               `sign_key` varchar(128) NOT NULL DEFAULT '' COMMENT 'JWT签名秘钥',
+                               `config_update` bigint NOT NULL DEFAULT '0' COMMENT '最近一次更新配置时间，Unix时间戳格式，精确到毫秒',
+                               `lic_status` tinyint unsigned NOT NULL DEFAULT '0' COMMENT '授权状态：0未授权，1已授权，2已过期',
+                               `lic_modules` varchar(128) NOT NULL DEFAULT '' COMMENT '授权模块ID，多个模块ID之间使用,分隔',
+                               `lic_exprie` bigint NOT NULL DEFAULT '0' COMMENT '授权到期时间',
+                               `lic_dbnum` smallint unsigned NOT NULL DEFAULT '0' COMMENT '授权数据库数量',
+                               `lic_time` bigint NOT NULL DEFAULT '0' COMMENT '最近一次授权时间',
+                               `update_time` bigint NOT NULL DEFAULT '0' COMMENT '更新时间',
+                               `create_time` bigint NOT NULL DEFAULT '0' COMMENT '创建时间',
+                               PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='系统基础配置信息表';
+
+--
+-- 表的结构 `sys_file`
+--
+
+DROP TABLE IF EXISTS `sys_file`;
+CREATE TABLE IF NOT EXISTS `sys_file` (
+    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '文件ID 主键',
+    `title` varchar(256) NOT NULL DEFAULT '' COMMENT '文件别名',
+    `name` varchar(256) NOT NULL DEFAULT '' COMMENT '文件名',
+    `path` varchar(2048) NOT NULL DEFAULT '' COMMENT '文件路径',
+    `size` bigint(20) NOT NULL DEFAULT '0' COMMENT '文件大小',
+    `category` tinyint(3) UNSIGNED NOT NULL DEFAULT '0' COMMENT '文件类型 0系统配置备份产生的文件，1上传的系统配置备份文件，99.上传的系统升级文件',
+    `info` varchar(2048) NOT NULL DEFAULT '' COMMENT '文件其他信息',
+    `create_time` bigint(20) NOT NULL DEFAULT '0' COMMENT '创建时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='系统文件信息表 ' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `sys_netcard_alias`
+--
+
+DROP TABLE IF EXISTS `sys_netcard_alias`;
+CREATE TABLE IF NOT EXISTS `sys_netcard_alias` (
+    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `name` varchar(64) NOT NULL DEFAULT '' COMMENT '实际接口名',
+    `alias` varchar(64) NOT NULL DEFAULT '' COMMENT '接口别名',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `uniq_name` (`name`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='接口别名映射关系表' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `sys_netcard_index`
+--
+
+DROP TABLE IF EXISTS `sys_netcard_index`;
+CREATE TABLE IF NOT EXISTS `sys_netcard_index` (
+    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `num` smallint(5) UNSIGNED NOT NULL DEFAULT '0' COMMENT '接口序号',
+    `extend_name` varchar(64) NOT NULL DEFAULT '' COMMENT '所属扩展卡名称',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `uniq_num` (`num`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='接口与扩展卡从属关系' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `sys_ntp`
+--
+
+DROP TABLE IF EXISTS `sys_ntp`;
+CREATE TABLE IF NOT EXISTS `sys_ntp` (
+    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ntp服务器ID',
+    `ip` varchar(64) NOT NULL DEFAULT '' COMMENT 'ntp服务器IP',
+    `port` smallint(5) UNSIGNED NOT NULL DEFAULT '0' COMMENT 'ntp服务器端口号',
+    `auto_sync` tinyint(3) UNSIGNED NOT NULL DEFAULT '0' COMMENT '是否自动同步 0否，1是',
+    `status` tinyint(3) UNSIGNED NOT NULL DEFAULT '0' COMMENT 'ntp服务器状态 0禁用，1启用',
+    `update_time` bigint(20) NOT NULL DEFAULT '0' COMMENT '更新时间',
+    `create_time` bigint(20) NOT NULL DEFAULT '0' COMMENT '创建时间',
+    `invalid` tinyint(3) UNSIGNED NOT NULL DEFAULT '0' COMMENT '是否已删除 0否，1是',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='系统ntp服务配置表 ' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `sys_recover_log`
+--
+
+DROP TABLE IF EXISTS `sys_recover_log`;
+CREATE TABLE IF NOT EXISTS `sys_recover_log` (
+    `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '恢复记录ID 主键',
+    `version` varchar(64) DEFAULT NULL COMMENT '备份文件版本号',
+    `file_id` int(11) NOT NULL COMMENT '备份文件ID',
+    `status` tinyint(4) NOT NULL COMMENT '恢复状态 0恢复中，1恢复失败，2恢复成功',
+    `user_id` int(11) NOT NULL COMMENT '操作人ID',
+    `create_time` bigint(20) NOT NULL COMMENT '创建时间 用户确认备份的时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `sys_route`
+--
+
+DROP TABLE IF EXISTS `sys_route`;
+CREATE TABLE IF NOT EXISTS `sys_route` (
+    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '路由ID',
+    `ip` varchar(64) NOT NULL DEFAULT '' COMMENT '路由IP',
+    `mask` varchar(32) NOT NULL DEFAULT '' COMMENT '路由子网掩码',
+    `gateway` varchar(64) NOT NULL DEFAULT '' COMMENT '路由网关地址',
+    `rank` smallint(6) NOT NULL DEFAULT '0' COMMENT '路由优先级 数值越大优先级越高',
+    `netcard_name` varchar(64) NOT NULL DEFAULT '' COMMENT '路由使用的接口系统名称',
+    `netcard_alias` varchar(64) NOT NULL DEFAULT '' COMMENT '路由使用的接口别名',
+    `type` tinyint(3) UNSIGNED NOT NULL DEFAULT '0' COMMENT '路由类型 0系统路由，1静态路由',
+    `update_time` bigint(20) NOT NULL DEFAULT '0' COMMENT '更新时间',
+    `create_time` bigint(20) NOT NULL DEFAULT '0' COMMENT '创建时间',
+    `invalid` tinyint(3) UNSIGNED NOT NULL DEFAULT '0' COMMENT '是否已删除 0否，1是',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='系统路由配置表 ' ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `sys_upgrade`
+--
+
+DROP TABLE IF EXISTS `sys_upgrade`;
+CREATE TABLE IF NOT EXISTS `sys_upgrade` (
+    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `old_version` varchar(64) NOT NULL DEFAULT '' COMMENT '升级前版本号',
+    `new_version` varchar(64) NOT NULL DEFAULT '' COMMENT '升级后版本号',
+    `type` tinyint(3) UNSIGNED NOT NULL DEFAULT '0' COMMENT '升级类型 0系统升级，1漏洞升级，99恢复出厂设置',
+    `file` varchar(2048) NOT NULL DEFAULT '' COMMENT '使用的升级文件 升级文件的存放位置（含文件名）',
+    `description` text COMMENT '升级描述',
+    `status` tinyint(3) UNSIGNED NOT NULL DEFAULT '0' COMMENT '升级操作状态 0操作中，1操作成功，2操作失败',
+    `user_id` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '操作人ID',
+    `user_name` varchar(255) NOT NULL DEFAULT '' COMMENT '操作人',
+    `update_time` bigint(20) NOT NULL DEFAULT '0' COMMENT '更新时间',
+    `create_time` bigint(20) NOT NULL DEFAULT '0' COMMENT '创建时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='系统升级、恢复出厂设置记录表 ' ROW_FORMAT=DYNAMIC;
+
+DROP TABLE IF EXISTS `agent_exchange_info`;
+CREATE TABLE `agent_exchange_info`  (
+                                        `id` int(0) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+                                        `agent_on` tinyint(0) NOT NULL DEFAULT 1 COMMENT '状态（0：开启，1;关闭）',
+                                        `audit_port` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '审计端口（抓取流量端口）',
+                                        `audit_info` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '审计系统加固点',
+                                        `remote_ip` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '远程服务器IP',
+                                        `receive_ip` varchar(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT '接收IP',
+                                        `is_reply` tinyint(0) NOT NULL DEFAULT 1 COMMENT '是否应答（0：开启，1;关闭）',
+                                        `db_info` varchar(601) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '描述抓取需要抓取的数据库信息',
+                                        `if_list` varchar(601) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '上报主机列表',
+                                        `cpu_use` varchar(601) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '上报主机cpu使用率',
+                                        `mem_use` varchar(601) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '上报主机Memory使用率',
+                                        `max_cpu` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT 'CPU阀值',
+                                        `site_name` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '应用ID',
+                                        `site_id` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '应用名称',
+                                        `is_deleted` tinyint(0) NOT NULL DEFAULT 0 COMMENT '是否删除（0：正常，1;删除）',
+                                        `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '创建者',
+                                        `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '更新者',
+                                        `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                                        `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                                        PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 142 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+
+DROP TABLE IF EXISTS sensitive_task_finish;
+CREATE TABLE sensitive_task_finish (
+                                       id int(0) NOT NULL AUTO_INCREMENT COMMENT 'ID',
+                                       task_id char(19) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '任务id',
+                                       site_id char(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '应用id',
+                                       is_valid tinyint(0) NOT NULL DEFAULT 0 COMMENT '是否有效（0：有效，1;无效）',
+                                       is_deleted tinyint(0) NOT NULL DEFAULT 0 COMMENT '是否删除（0：正常，1;删除）',
+                                       create_by varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '创建者',
+                                       update_by varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '更新者',
+                                       create_time datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                                       PRIMARY KEY (id) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+DROP TABLE IF EXISTS api_check_job_record;
+CREATE TABLE api_check_job_record (
+                                      id varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '主键',
+                                      job_id varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                                      site_id varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                                      job_status int(0) NULL DEFAULT NULL,
+                                      execute_time datetime(0) NULL DEFAULT NULL,
+                                      audit_rule_ids varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                                      rules_detail text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                                      is_deleted int(0) NULL DEFAULT NULL,
+                                      create_time datetime(0) NULL DEFAULT NULL,
+                                      create_by varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                                      update_time datetime(0) NULL DEFAULT NULL,
+                                      update_by varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                                      PRIMARY KEY (id) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+DROP TABLE IF EXISTS `health_check_site_condition`;
+CREATE TABLE IF NOT EXISTS `health_check_site_condition` (
+    `id` int(0) NOT NULL AUTO_INCREMENT COMMENT '主键id',
+    `site_id` varchar(64) NOT NULL COMMENT '应用ID',
+    condition_type int(0) NOT NULL default 0 COMMENT '条件类型',
+    `condition_key` varchar(64) NOT NULL COMMENT '判定条件',
+    `condition_val` varchar(200) DEFAULT NULL COMMENT '条件判断的值',
+    `condition_desc` varchar(200) DEFAULT NULL COMMENT '状态码含义',
+    `condition_reason` varchar(200) DEFAULT NULL COMMENT '可能的问题原因',
+    `is_built` tinyint(0) NOT NULL DEFAULT 0 COMMENT '是否内置',
+    `is_deleted` tinyint(0) NOT NULL DEFAULT 0 COMMENT '是否删除（0：正常，1;删除）',
+    `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '创建者',
+    `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '更新者',
+    `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+    `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+    `err_code_path` varchar(255) COMMENT '错误码路径',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='健康体检应用判定条件关联表' ROW_FORMAT=DYNAMIC;
+
+
+DROP TABLE IF EXISTS `api_params`;
+CREATE TABLE IF NOT EXISTS `api_params` (
+    `id` int(0) NOT NULL AUTO_INCREMENT COMMENT '主键id',
+    `site_id` varchar(64) NOT NULL COMMENT '应用ID',
+    `api_id` varchar(64) NOT NULL COMMENT 'apiId',
+    `api_name` varchar(255) COMMENT 'api名称',
+    category_label_id varchar(255) COMMENT '分类标签',
+    `level_label_id` varchar(255) COMMENT '分级标签',
+    `sensitive_data_id` varchar(200) DEFAULT NULL COMMENT '敏感特征',
+    verify_status tinyint(0) default 0 comment '核实状态：0未核实，1未修正，2已核实',
+    verify_time datetime(0) comment '核实时间',
+    `field_key` varchar(200) DEFAULT NULL COMMENT '字段英文名',
+    sample_value varchar(255) DEFAULT NULL COMMENT '示例值',
+    `param_depth` varchar(200) DEFAULT NULL COMMENT '字段层级',
+    `field_type` varchar(20) COMMENT '字段类型',
+    param_source tinyint(0) default 0 COMMENT '参数来源:1.请求参数，2.返回参数，3.query参数，4.path参数，5.header，6.cookie',
+    status tinyint(0) default 0 COMMENT '分类定级状态',
+    category_time datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '分类时间',
+    level_time datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '分级时间',
+    `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '创建者',
+    `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '更新者',
+    `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+    `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='API参数表' ROW_FORMAT=DYNAMIC;
+
+-- ----------------------------
+-- Table structure for industry_template
+-- ----------------------------
+DROP TABLE IF EXISTS `industry_template`;
+CREATE TABLE `industry_template`  (
+                                      `id` int(0) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID,自增',
+                                      `file_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '模板绑定的文件ID',
+                                      `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '模板名称',
+                                      `description` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '模板描述',
+                                      `type` tinyint(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '模板类型：0自定义,1内置',
+                                      `status` tinyint(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '应用状态： 0未应用，1已应用',
+                                      `create_time` datetime(0) NULL DEFAULT NULL COMMENT '添加时间',
+                                      `update_time` datetime(0) NULL DEFAULT NULL COMMENT '应用时间',
+                                      PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '行业模板表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for industry_template_file
+-- ----------------------------
+DROP TABLE IF EXISTS `industry_template_file`;
+CREATE TABLE `industry_template_file`  (
+                                           `id` int(0) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID,自增',
+                                           `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '文件别名',
+                                           `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '文件名',
+                                           `path` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '文件路径',
+                                           `size` bigint(0) NOT NULL DEFAULT 0 COMMENT '文件大小',
+                                           `create_time` datetime(0) NOT NULL COMMENT '创建时间',
+                                           PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '行业模板文件表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for category_label
+-- ----------------------------
+DROP TABLE IF EXISTS `category_label`;
+CREATE TABLE `category_label`  (
+                                   `id` int(0) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+                                   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '标签名称',
+                                   `description` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '标签描述',
+                                   `rank` tinyint(0) UNSIGNED NOT NULL COMMENT '标签层级',
+                                   `pid` int(0) UNSIGNED NOT NULL COMMENT '父ID',
+                                   `user_id` int(0) UNSIGNED NOT NULL COMMENT '创建者ID',
+                                   `create_time` bigint(0) NOT NULL DEFAULT 0 COMMENT '创建时间',
+                                   `update_time` bigint(0) NOT NULL DEFAULT 0 COMMENT '更新时间',
+                                   `code` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '模板别名',
+                                   `template_id` int(0) NOT NULL DEFAULT 0 COMMENT '模板ID',
+                                   PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 798 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '分类标签' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for category_level
+-- ----------------------------
+DROP TABLE IF EXISTS `category_level`;
+CREATE TABLE `category_level`  (
+                                   `id` int(0) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID,自增',
+                                   `category_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '分类ID',
+                                   `level_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '分级ID',
+                                   `template_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '模板ID',
+                                   `create_time` bigint(0) NOT NULL DEFAULT 0 COMMENT '创建时间',
+                                   PRIMARY KEY (`id`) USING BTREE,
+                                   INDEX `idx_category_id`(`category_id`) USING BTREE,
+                                   INDEX `idx_level_id`(`level_id`) USING BTREE,
+                                   INDEX `idx_template_id`(`template_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 804 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '分类分级关联表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for data_model
+-- ----------------------------
+DROP TABLE IF EXISTS `data_model`;
+CREATE TABLE `data_model`  (
+                               `id` int(0) NOT NULL AUTO_INCREMENT,
+                               `category_ids` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                               `level_id` int(0) NULL DEFAULT NULL,
+                               `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                               `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                               category_time datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '分类时间',
+                               level_time datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '分级时间',
+                               create_by varchar(255) DEFAULT NULL,
+                               `create_time` datetime(0) NULL DEFAULT NULL,
+                               update_by varchar(255) DEFAULT NULL,
+                               `update_time` datetime(0) NULL DEFAULT NULL,
+                               PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 19 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for data_model_column
+-- ----------------------------
+DROP TABLE IF EXISTS `data_model_column`;
+CREATE TABLE `data_model_column`  (
+                                      `id` int(0) NOT NULL AUTO_INCREMENT,
+                                      `model_id` int(0) DEFAULT NULL COMMENT '关联DataMode主键',
+                                      `title` varchar(255) DEFAULT NULL,
+                                      `type` varchar(255) DEFAULT NULL,
+                                      `symbol` varchar(255) DEFAULT NULL COMMENT '特征标识',
+                                      `sensitive_type_id` varchar(255) DEFAULT NULL COMMENT '敏感特征ID',
+                                      `sensitive_data_id` varchar(255) DEFAULT NULL COMMENT '敏感数据ID',
+                                      `create_time` datetime(0) DEFAULT NULL,
+                                      `update_time` datetime(0) DEFAULT NULL,
+                                      PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for data_model_interface_rel
+-- ----------------------------
+DROP TABLE IF EXISTS `data_model_interface_rel`;
+CREATE TABLE `data_model_interface_rel`  (
+                                             `id` int(0) NOT NULL AUTO_INCREMENT,
+                                             `column_name` varchar(255) NOT NULL,
+                                             `api_id` varchar(255)  NOT NULL,
+                                             `api_name` varchar(255) DEFAULT NULL,
+                                             `api_path` varchar(255)  DEFAULT NULL,
+                                             `site_id` varchar(255) DEFAULT NULL,
+                                             `site_name` varchar(255) DEFAULT NULL,
+                                             `domains` varchar(255) DEFAULT NULL COMMENT '域名（逗号分隔）',
+                                             `sensitive_ids` varchar(255) DEFAULT NULL COMMENT '涉敏类型（逗号分隔）',
+                                             `create_time` datetime(0) NULL DEFAULT NULL,
+                                             PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB  CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for level_label
+-- ----------------------------
+DROP TABLE IF EXISTS `level_label`;
+CREATE TABLE `level_label`  (
+                                `id` int(0) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+                                `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '标签名称',
+                                `code` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '模板别名',
+                                `template_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '模板ID',
+                                `color` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '标签颜色',
+                                `sensitive_rank` tinyint(0) UNSIGNED NOT NULL COMMENT '敏感级别号',
+                                `description` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+                                `group_id` int(0) UNSIGNED NOT NULL COMMENT '标签组ID',
+                                `user_id` int(0) UNSIGNED NOT NULL COMMENT '创建者ID',
+                                `create_time` bigint(0) NOT NULL DEFAULT 0 COMMENT '创建时间',
+                                `update_time` bigint(0) NOT NULL DEFAULT 0 COMMENT '更新时间',
+                                `type` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '分组类型',
+                                PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 42 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '分级标签' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for level_label_group
+-- ----------------------------
+DROP TABLE IF EXISTS `level_label_group`;
+CREATE TABLE `level_label_group`  (
+                                      `id` int(0) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+                                      `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '标签组名称',
+                                      `description` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '描述',
+                                      `user_id` int(0) UNSIGNED NOT NULL COMMENT '创建者ID',
+                                      `create_time` bigint(0) NOT NULL DEFAULT 0 COMMENT '创建时间',
+                                      `update_time` bigint(0) NOT NULL DEFAULT 0 COMMENT '更新时间',
+                                      `type` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '分组类型',
+                                      PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 19 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '分级标签组' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for mark_rule
+-- ----------------------------
+DROP TABLE IF EXISTS `mark_rule`;
+CREATE TABLE `mark_rule`  (
+                              `id` int(0) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键自增',
+                              `level_id` int(0) NOT NULL COMMENT '关联分级',
+                              `group_id` int(0) NULL DEFAULT NULL COMMENT '分组ID',
+                              `sensitive_id` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '敏感类型',
+                              `customized` tinyint(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否自定义：0-内置，1-自定义',
+                              `update_time` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                              `create_time` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                              PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 16 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '标记规则表' ROW_FORMAT = Dynamic;
+
+
+-- ----------------------------
+-- Table structure for asset_level
+-- ----------------------------
+DROP TABLE IF EXISTS `asset_level`;
+CREATE TABLE `asset_level`  (
+                                `id` int(0) UNSIGNED NOT NULL AUTO_INCREMENT,
+                                `src_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '数据源ID',
+                                `asset_type` tinyint(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '资产类型 0:数据源 1:模式 2:表 3:字段 4:文件源模式 5:文件源表 6:文件源字段',
+                                `asset_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '资产ID',
+                                `level_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '分级标签ID',
+                                `user_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建人ID',
+                                `create_time` bigint(0) NOT NULL DEFAULT 0 COMMENT '创建时间',
+                                `update_time` bigint(0) NOT NULL DEFAULT 0 COMMENT '更新时间',
+                                PRIMARY KEY (`id`) USING BTREE,
+                                INDEX `idx_type_id`(`asset_type`, `asset_id`) USING BTREE,
+                                INDEX `idx_src_id`(`src_id`) USING BTREE,
+                                INDEX `idx_asset_id`(`asset_id`) USING BTREE,
+                                INDEX `idx_level_id`(`level_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '资产和分级标签的关联表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for rule_level
+-- ----------------------------
+DROP TABLE IF EXISTS `rule_level`;
+CREATE TABLE `rule_level`  (
+                               `id` int(0) UNSIGNED NOT NULL AUTO_INCREMENT,
+                               `rule_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '特征项ID',
+                               `level_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '分级标签ID',
+                               `user_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建人ID',
+                               `create_time` bigint(0) NOT NULL DEFAULT 0 COMMENT '创建时间',
+                               `update_time` bigint(0) NOT NULL DEFAULT 0 COMMENT '修改时间',
+                               PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '特征项与分级关联表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for asset_category
+-- ----------------------------
+DROP TABLE IF EXISTS `asset_category`;
+CREATE TABLE `asset_category`  (
+                                   `id` int(0) UNSIGNED NOT NULL AUTO_INCREMENT,
+                                   `src_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '数据源ID',
+                                   `asset_type` tinyint(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '资产类型 0:数据源 1:模式 2:表 3:字段 4:文件源模式 5:文件源表 6:文件源字段',
+                                   `asset_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '资产ID',
+                                   `category_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '分类标签ID',
+                                   `user_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建人ID',
+                                   `create_time` datetime(0) NULL DEFAULT NULL COMMENT '创建时间',
+                                   `update_time` datetime(0) NULL DEFAULT NULL COMMENT '更新时间',
+                                   PRIMARY KEY (`id`) USING BTREE,
+                                   INDEX `idx_type_id`(`asset_type`) USING BTREE,
+                                   INDEX `idx_src_id`(`src_id`) USING BTREE,
+                                   INDEX `idx_asset_id`(`asset_id`) USING BTREE,
+                                   INDEX `idx_category_id`(`category_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '资产和分类标签的关联表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for risk_level
+-- ----------------------------
+DROP TABLE IF EXISTS `risk_level`;
+CREATE TABLE `risk_level`  (
+                               `id` int(0) NOT NULL AUTO_INCREMENT COMMENT '风险id',
+                               `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '风险等级名称',
+                               `is_valid` tinyint(0) NOT NULL DEFAULT 0 COMMENT '是否有效（0：有效，1;无效）',
+                               `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '创建者',
+                               `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '更新者',
+                               `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                               `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                               PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for rule_category
+-- ----------------------------
+DROP TABLE IF EXISTS `rule_category`;
+CREATE TABLE `rule_category`  (
+                                  `id` int(0) UNSIGNED NOT NULL AUTO_INCREMENT,
+                                  `rule_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '特征项ID',
+                                  `category_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '分类标签ID',
+                                  `user_id` int(0) UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建人ID',
+                                  `create_time` bigint(0) NOT NULL DEFAULT 0 COMMENT '创建时间',
+                                  `update_time` bigint(0) NOT NULL DEFAULT 0 COMMENT '修改时间',
+                                  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '特征项与分类关联表' ROW_FORMAT = Dynamic;
+
+
+DROP TABLE IF EXISTS `xxl_job_info`;
+CREATE TABLE `xxl_job_info` (
+                                `id` int(11) NOT NULL AUTO_INCREMENT,
+                                `job_group` int(11) NOT NULL COMMENT '执行器主键ID',
+                                `job_desc` varchar(255) NOT NULL,
+                                `add_time` datetime DEFAULT NULL,
+                                `update_time` datetime DEFAULT NULL,
+                                `author` varchar(64) DEFAULT NULL COMMENT '作者',
+                                `alarm_email` varchar(255) DEFAULT NULL COMMENT '报警邮件',
+                                `schedule_type` varchar(50) NOT NULL DEFAULT 'NONE' COMMENT '调度类型',
+                                `schedule_conf` varchar(128) DEFAULT NULL COMMENT '调度配置，值含义取决于调度类型',
+                                `misfire_strategy` varchar(50) NOT NULL DEFAULT 'DO_NOTHING' COMMENT '调度过期策略',
+                                `executor_route_strategy` varchar(50) DEFAULT NULL COMMENT '执行器路由策略',
+                                `executor_handler` varchar(255) DEFAULT NULL COMMENT '执行器任务handler',
+                                `executor_param` varchar(512) DEFAULT NULL COMMENT '执行器任务参数',
+                                `executor_block_strategy` varchar(50) DEFAULT NULL COMMENT '阻塞处理策略',
+                                `executor_timeout` int(11) NOT NULL DEFAULT '0' COMMENT '任务执行超时时间，单位秒',
+                                `executor_fail_retry_count` int(11) NOT NULL DEFAULT '0' COMMENT '失败重试次数',
+                                `glue_type` varchar(50) NOT NULL COMMENT 'GLUE类型',
+                                `glue_source` mediumtext COMMENT 'GLUE源代码',
+                                `glue_remark` varchar(128) DEFAULT NULL COMMENT 'GLUE备注',
+                                `glue_updatetime` datetime DEFAULT NULL COMMENT 'GLUE更新时间',
+                                `child_jobid` varchar(255) DEFAULT NULL COMMENT '子任务ID，多个逗号分隔',
+                                `trigger_status` tinyint(4) NOT NULL DEFAULT '0' COMMENT '调度状态：0-停止，1-运行',
+                                `trigger_last_time` bigint(13) NOT NULL DEFAULT '0' COMMENT '上次调度时间',
+                                `trigger_next_time` bigint(13) NOT NULL DEFAULT '0' COMMENT '下次调度时间',
+                                PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `xxl_job_log`;
+CREATE TABLE `xxl_job_log` (
+                               `id` bigint(20) NOT NULL AUTO_INCREMENT,
+                               `job_group` int(11) NOT NULL COMMENT '执行器主键ID',
+                               `job_id` int(11) NOT NULL COMMENT '任务，主键ID',
+                               `executor_address` varchar(255) DEFAULT NULL COMMENT '执行器地址，本次执行的地址',
+                               `executor_handler` varchar(255) DEFAULT NULL COMMENT '执行器任务handler',
+                               `executor_param` varchar(512) DEFAULT NULL COMMENT '执行器任务参数',
+                               `executor_sharding_param` varchar(20) DEFAULT NULL COMMENT '执行器任务分片参数，格式如 1/2',
+                               `executor_fail_retry_count` int(11) NOT NULL DEFAULT '0' COMMENT '失败重试次数',
+                               `trigger_time` datetime DEFAULT NULL COMMENT '调度-时间',
+                               `trigger_code` int(11) NOT NULL COMMENT '调度-结果',
+                               `trigger_msg` text COMMENT '调度-日志',
+                               `handle_time` datetime DEFAULT NULL COMMENT '执行-时间',
+                               `handle_code` int(11) NOT NULL COMMENT '执行-状态',
+                               `handle_msg` text COMMENT '执行-日志',
+                               `alarm_status` tinyint(4) NOT NULL DEFAULT '0' COMMENT '告警状态：0-默认、1-无需告警、2-告警成功、3-告警失败',
+                               PRIMARY KEY (`id`),
+                               KEY `I_trigger_time` (`trigger_time`),
+                               KEY `I_handle_code` (`handle_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `xxl_job_log_report`;
+CREATE TABLE `xxl_job_log_report` (
+                                      `id` int(11) NOT NULL AUTO_INCREMENT,
+                                      `trigger_day` datetime DEFAULT NULL COMMENT '调度-时间',
+                                      `running_count` int(11) NOT NULL DEFAULT '0' COMMENT '运行中-日志数量',
+                                      `suc_count` int(11) NOT NULL DEFAULT '0' COMMENT '执行成功-日志数量',
+                                      `fail_count` int(11) NOT NULL DEFAULT '0' COMMENT '执行失败-日志数量',
+                                      `update_time` datetime DEFAULT NULL,
+                                      PRIMARY KEY (`id`),
+                                      UNIQUE KEY `i_trigger_day` (`trigger_day`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `xxl_job_logglue`;
+CREATE TABLE `xxl_job_logglue` (
+                                   `id` int(11) NOT NULL AUTO_INCREMENT,
+                                   `job_id` int(11) NOT NULL COMMENT '任务，主键ID',
+                                   `glue_type` varchar(50) DEFAULT NULL COMMENT 'GLUE类型',
+                                   `glue_source` mediumtext COMMENT 'GLUE源代码',
+                                   `glue_remark` varchar(128) NOT NULL COMMENT 'GLUE备注',
+                                   `add_time` datetime DEFAULT NULL,
+                                   `update_time` datetime DEFAULT NULL,
+                                   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `xxl_job_registry`;
+CREATE TABLE `xxl_job_registry` (
+                                    `id` int(11) NOT NULL AUTO_INCREMENT,
+                                    `registry_group` varchar(50) NOT NULL,
+                                    `registry_key` varchar(255) NOT NULL,
+                                    `registry_value` varchar(255) NOT NULL,
+                                    `update_time` datetime DEFAULT NULL,
+                                    PRIMARY KEY (`id`),
+                                    KEY `i_g_k_v` (`registry_group`,`registry_key`,`registry_value`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `xxl_job_group`;
+CREATE TABLE `xxl_job_group` (
+                                 `id` int(11) NOT NULL AUTO_INCREMENT,
+                                 `app_name` varchar(64) NOT NULL COMMENT '执行器AppName',
+                                 `title` varchar(12) NOT NULL COMMENT '执行器名称',
+                                 `address_type` tinyint(4) NOT NULL DEFAULT '0' COMMENT '执行器地址类型：0=自动注册、1=手动录入',
+                                 `address_list` text COMMENT '执行器地址列表，多地址逗号分隔',
+                                 `update_time` datetime DEFAULT NULL,
+                                 PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `xxl_job_user`;
+CREATE TABLE `xxl_job_user` (
+                                `id` int(11) NOT NULL AUTO_INCREMENT,
+                                `username` varchar(50) NOT NULL COMMENT '账号',
+                                `password` varchar(50) NOT NULL COMMENT '密码',
+                                `role` tinyint(4) NOT NULL COMMENT '角色：0-普通用户、1-管理员',
+                                `permission` varchar(255) DEFAULT NULL COMMENT '权限：执行器ID列表，多个逗号分割',
+                                PRIMARY KEY (`id`),
+                                UNIQUE KEY `i_username` (`username`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `xxl_job_lock`;
+CREATE TABLE `xxl_job_lock` (
+                                `lock_name` varchar(50) NOT NULL COMMENT '锁名称',
+                                PRIMARY KEY (`lock_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `service_configure`;
+CREATE TABLE `service_configure`  (
+                                      `id` int(0) NOT NULL COMMENT '主键',
+                                      `access_type` int(0) NULL DEFAULT NULL COMMENT '访问权限类型 ,1:完全访问，2：白名单',
+                                      `ip` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                                      `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '创建者',
+                                      `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '更新者',
+                                      `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                                      `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                                      `is_deleted` tinyint(0) NOT NULL DEFAULT 0 COMMENT '是否删除（0：正常，1;删除）',
+                                      PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+
+DROP TABLE IF EXISTS `acl_role_permission`;
+CREATE TABLE `acl_role_permission`  (
+                                        `id` char(19) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+                                        `role_id` char(19) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+                                        `permission_id` char(19) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+                                        `create_time` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                                        `update_time` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                                        PRIMARY KEY (`id`) USING BTREE,
+                                        INDEX `idx_role_id`(`role_id`) USING BTREE,
+                                        INDEX `idx_permission_id`(`permission_id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '角色权限' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for risk_rule
+-- ----------------------------
+DROP TABLE IF EXISTS `risk_rule`;
+CREATE TABLE `risk_rule`  (
+                              `audit_rule_id` int(0) NOT NULL AUTO_INCREMENT COMMENT '规则主键id',
+                              `rule_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '规则名称',
+                              `rule_desc` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '规则描述',
+                              `risk_id` int(0) NOT NULL COMMENT '风险等级ID',
+                              `risk_type` tinyint(0) NULL DEFAULT NULL COMMENT '风险类型：1.安全攻击，2.数据泄露，3.非法访问，4.管理缺陷',
+                              `protection_status` tinyint(0) NOT NULL DEFAULT 0 COMMENT '防护状态：0：关闭 1：开启',
+                              `type` tinyint(0) NOT NULL DEFAULT 1 COMMENT '类型：0：内置，1：自定义',
+                              `audit_type` tinyint(0) NULL DEFAULT 0 COMMENT '审计类型',
+                              `start_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '防护状态开启时间',
+                              `is_deleted` tinyint(0) NOT NULL DEFAULT 0 COMMENT '是否删除（0：正常，1;删除）',
+                              `site_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '应用id',
+                              `parent_rule_id` int(0) NULL DEFAULT -1 COMMENT '父类的规则ID（策略复制，策略下发应用生成）',
+                              `is_parameter` tinyint(0) NULL DEFAULT 0 COMMENT '参数配置 1：有，0：无',
+                              `threaten` double(4, 1) UNSIGNED NULL DEFAULT 0.0 COMMENT '威胁性-风险检测',
+                              `check_accuracy_risk` double(4, 1) UNSIGNED NULL DEFAULT 0.0 COMMENT '检测准确性-风险检测',
+                              `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '参考说明',
+                              `condition_value` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '配置参数',
+                              `problem_causes` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '问题原因',
+                              `check_target` tinyint(1) UNSIGNED ZEROFILL NULL DEFAULT NULL COMMENT '检测对象：1=API，2=到访IP，3=用户账号，4=终端，5=IP/账号，6=请求包',
+                              `owasp` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '对应OWASP API Top10',
+                              `cwe_no` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '对应CWE编号',
+                              `capec_no` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '对应CAPEC编号',
+                              `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '创建者',
+                              `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                              `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '更新者',
+                              `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                              `repair_solution` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '修复建议',
+                              PRIMARY KEY (`audit_rule_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 477 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '风险监测规则表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for risk_rule_condition_rel
+-- ----------------------------
+DROP TABLE IF EXISTS `risk_rule_condition_rel`;
+CREATE TABLE `risk_rule_condition_rel`  (
+                                            `rule_condition_rel_id` int(0) NOT NULL AUTO_INCREMENT COMMENT '关联表主键id',
+                                            `audit_rule_id` int(0) NOT NULL COMMENT '规则id',
+                                            `condition_key` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '判定条件',
+                                            `logical_operator` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '逻辑符',
+                                            `real_condition` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '真实条件值',
+                                            `condition_value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '判定条件值',
+                                            `is_deleted` tinyint(0) NOT NULL DEFAULT 0 COMMENT '是否删除（0：正常，1;删除）',
+                                            `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '创建者',
+                                            `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '更新者',
+                                            `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                                            `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                                            `is_default` tinyint(0) NULL DEFAULT 0 COMMENT '是否是默认值全局（0：默认，1：自定义）',
+                                            `parent_id` int(0) NULL DEFAULT -1 COMMENT '父类的条件ID（策略复制，策略下发应用生成）',
+                                            `param_unit` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '参数单位',
+                                            `param_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '参数类型',
+                                            `param_src` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '参数来源',
+                                            `default_condition` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '默认值',
+                                            PRIMARY KEY (`rule_condition_rel_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 634 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '风险监测规则条件表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for api_check_job
+-- ----------------------------
+DROP TABLE IF EXISTS `risk_check_job`;
+CREATE TABLE `risk_check_job`  (
+                                   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '主键',
+                                   `app_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '应用ID',
+                                   `job_status` int(0) NULL DEFAULT NULL COMMENT '任务状态：0-初始，1-进行中，2-停止，3-结束',
+                                   `start_time` datetime(0) NULL DEFAULT NULL,
+                                   `check_type` int(0) NULL DEFAULT NULL COMMENT '监测类型：1-风险监测',
+                                   `period_length` int(0) NULL DEFAULT NULL COMMENT '任务周期长度',
+                                   `execute_mode` tinyint(0) NULL DEFAULT NULL COMMENT '执行方式：0-单次，1-反复',
+                                   `job_interval` int(0) NULL DEFAULT NULL COMMENT '任务执行间隔',
+                                   `disabled` int(0) NULL DEFAULT 0 COMMENT '是否禁用：0-正常，1-禁用',
+                                   `is_deleted` tinyint(0) NOT NULL COMMENT '状态：0-正常，1-已删除',
+                                   `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '创建者',
+                                   `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '更新者',
+                                   `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                                   `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                                   PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '风险监测检测任务表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for account_management
+-- ----------------------------
+DROP TABLE IF EXISTS `account_management`;
+CREATE TABLE `account_management`  (
+                                       `id` int(0) NOT NULL AUTO_INCREMENT,
+                                       `account` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '用户账号',
+                                       `site_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '服务ID',
+                                       `mobile` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '联系电话',
+                                       `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '联系邮箱',
+                                       `first_found_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '首次发现时间',
+                                       `privilege_flag` tinyint(0) NULL DEFAULT NULL COMMENT '特权标记-默认0，标记1',
+                                       `risk_flag` tinyint(0) NULL DEFAULT NULL COMMENT '风险标记-默认0，标记1',
+                                       `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                                       PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for weakness_analyze
+-- ----------------------------
+DROP TABLE IF EXISTS `weakness_analyze`;
+CREATE TABLE `weakness_analyze`  (
+                                     `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '主键',
+                                     `xxl_job_id` bigint(0) NULL DEFAULT NULL COMMENT 'XxlJob任务ID',
+                                     `task_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '任务名称',
+                                     `site_ids` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '应用ID',
+                                     `job_status` int(0) NULL DEFAULT NULL COMMENT '任务状态：0-初始，1-进行中，2-停止，3-结束',
+                                     `start_time` datetime(0) NULL DEFAULT NULL,
+                                     `period_length` int(0) NULL DEFAULT NULL COMMENT '任务周期长度',
+                                     `execute_mode` tinyint(0) NULL DEFAULT NULL COMMENT '执行方式：0-单次，1-反复',
+                                     `job_interval` int(0) NULL DEFAULT NULL COMMENT '任务执行间隔',
+                                     `disabled` int(0) NULL DEFAULT 0 COMMENT '是否禁用：0-正常，1-禁用',
+                                     `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '创建者',
+                                     `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '更新者',
+                                     `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                                     `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                                     PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '弱点评估任务表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for weakness_analyze_report
+-- ----------------------------
+DROP TABLE IF EXISTS `weakness_analyze_report`;
+CREATE TABLE `weakness_analyze_report`  (
+                                            `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '主键',
+                                            `task_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                                            `site_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                                            `job_status` int(0) NULL DEFAULT NULL,
+                                            `batch_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '批次ID',
+                                            `execute_time` datetime(0) NULL DEFAULT NULL COMMENT '开始时间/执行时间',
+                                            `finish_time` datetime(0) NULL DEFAULT NULL COMMENT '完成时间/结束时间',
+                                            `rule_count` int(0) NULL DEFAULT NULL,
+                                            `audit_types` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '审计类型（区别于规则ID）',
+                                            `is_unread` int(0) NULL DEFAULT NULL COMMENT '是否未读',
+                                            `has_weakness` int(0) NULL DEFAULT NULL COMMENT '是否存在弱点',
+                                            `create_time` datetime(0) NULL DEFAULT NULL,
+                                            `create_by` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                                            `update_time` datetime(0) NULL DEFAULT NULL,
+                                            `update_by` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                                            PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for weakness_rule
+-- ----------------------------
+DROP TABLE IF EXISTS `weakness_rule`;
+CREATE TABLE `weakness_rule`  (
+                                  `id` int(0) NOT NULL AUTO_INCREMENT,
+                                  `task_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '任务ID',
+                                  `weakness_type` int(0) NULL DEFAULT NULL COMMENT '弱点类型（数据传输缺陷、资源限制缺陷等）',
+                                  `rule_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '漏洞名称',
+                                  `rule_reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '规则参考描述（根据参数组装生成）',
+                                  `threat_core` double NULL DEFAULT NULL COMMENT '威胁性分值（0-5）',
+                                  `threat_level` tinyint(0) NULL DEFAULT NULL COMMENT '漏洞威胁等级（123低中高）',
+                                  `weakness_severity` tinyint(0) NULL DEFAULT NULL COMMENT '问题严重性（123低中高）',
+                                  `attack_possibility` tinyint(0) NULL DEFAULT NULL COMMENT '攻击可能性（123低中高）',
+                                  `check_accuracy` int(0) NULL DEFAULT NULL COMMENT '监测准确性（123低中高）',
+                                  `effective_scope` int(0) NULL DEFAULT NULL COMMENT '作用范围（0-所有API，1-敏感API，2-登录API）',
+                                  `once_only` tinyint(0) NULL DEFAULT NULL COMMENT '命中后不再监测（1-是，0-否）',
+                                  `attack_attempt` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '攻击尝试思路描述',
+                                  `owasp` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '对应OWASP API Top10',
+                                  `cwe_no` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '对应CWE编号',
+                                  `capec_no` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '对应CAPEC编号',
+                                  `rule_desc` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '弱点问题描述',
+                                  `damage` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '威胁或后果，损害性',
+                                  `repair_solution` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '修复方案、修复建议',
+                                  `parent_id` int(0) NULL DEFAULT NULL COMMENT '全局规则编号',
+                                  `audit_type` int(0) NULL DEFAULT NULL COMMENT '审计类型（关联JAVA代码执行类）',
+                                  `status` tinyint(0) NULL DEFAULT NULL COMMENT '是否启用',
+                                  `create_time` datetime(0) NULL DEFAULT NULL COMMENT '添加时间',
+                                  `create_by` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                                  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 181 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '弱点评估规则' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for weakness_rule_condition
+-- ----------------------------
+DROP TABLE IF EXISTS `weakness_rule_condition`;
+CREATE TABLE `weakness_rule_condition`  (
+                                            `id` int(0) NOT NULL AUTO_INCREMENT,
+                                            `task_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '任务ID',
+                                            `rule_id` int(0) NOT NULL COMMENT '规则id',
+                                            `label` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '判定条件标题',
+                                            `logical_operator` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '逻辑符',
+                                            `real_condition` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '真实条件值',
+                                            `parent_id` int(0) NULL DEFAULT -1 COMMENT '父类的条件ID（策略复制，策略下发应用生成）',
+                                            `param_unit` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '参数单位',
+                                            `param_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '参数类型',
+                                            `default_condition` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '默认值',
+                                            `create_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '创建者',
+                                            `update_by` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '更新者',
+                                            `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                                            `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                                            PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 191 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '审计规则和条件关联表' ROW_FORMAT = Dynamic;
+
+CREATE TABLE `sys_global_config`  (
+                                      `id` int(0) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID,自增',
+                                      `ip` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT 'ip地址',
+                                      `inter` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '采集端口',
+                                      `create_by` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '创建者',
+                                      `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+                                      `update_by` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '更新者',
+                                      `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+                                      PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COMMENT = '全局IP及采集端口配置表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for report_template
+-- ----------------------------
+DROP TABLE IF EXISTS `report_template`;
+CREATE TABLE `report_template`  (
+                                    `id` int(0) NOT NULL AUTO_INCREMENT,
+                                    `code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '模板标识',
+                                    `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '报表模板标题',
+                                    `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '报表模板描述',
+                                    `template_type` int(0) NULL DEFAULT NULL COMMENT '报表模板类型（0-基础报表，1-专项报表）',
+                                    `outline` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '目录大纲',
+                                    `template_html_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '模板HTML位置',
+                                    `create_by` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                                    `create_time` datetime(0) NULL DEFAULT NULL,
+                                    PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '报表模板' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for report_task
+-- ----------------------------
+DROP TABLE IF EXISTS `report_task`;
+CREATE TABLE `report_task`  (
+                                `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+                                `xxl_job_id` int(0) NULL DEFAULT NULL COMMENT 'xxlJob主键',
+                                `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                                `status` int(0) NULL DEFAULT 0 COMMENT '启用状态',
+                                `template_codes` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '模板标识，逗号分隔',
+                                `site_ids` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '服务ID，逗号分隔',
+                                `execute_type` int(0) NULL DEFAULT NULL COMMENT '执行方式（0-立即执行，1-定时执行，2-周期执行）',
+                                `execute_time` datetime(0) NULL DEFAULT NULL COMMENT '执行时间（定时执行有效）',
+                                `periodic_expression` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '周期表达式（见实体类字段描述）',
+                                `time_range_start` datetime(0) NULL DEFAULT NULL COMMENT '筛选起始时间',
+                                `time_range_end` datetime(0) NULL DEFAULT NULL COMMENT '筛选截至时间',
+                                `task_update` datetime(0) NULL DEFAULT NULL COMMENT '任务更新时间（调度触发）',
+                                `report_pattern` int(0) NULL DEFAULT 0 COMMENT '报表格式（0-html,1-pdf,2-docx）未确定',
+                                `notice_type` int(0) NULL DEFAULT 0 COMMENT '推送方式（0-不主动通知，1-邮件通知）未确定',
+                                `notice_config` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '推送参数配置',
+                                `create_by` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                                `create_time` datetime(0) NULL DEFAULT NULL,
+                                `update_by` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                                `update_time` datetime(0) NULL DEFAULT NULL,
+                                PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for report_task_record
+-- ----------------------------
+DROP TABLE IF EXISTS `report_task_record`;
+CREATE TABLE `report_task_record`  (
+                                       `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+                                       `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '报表名称（任务名称-开始时间-结束时间）',
+                                       `task_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '报表任务ID',
+                                       `report_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '报表数据JSON',
+                                       `template_codes` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '报表模板标识（逗号分隔）',
+                                       `is_viewed` int(0) NULL DEFAULT NULL COMMENT '是否被查看（0-否，1-是）',
+                                       `is_downloaded` int(0) NULL DEFAULT NULL COMMENT '是否被下载（0-否，1-是）',
+                                       `is_success` int(0) NULL DEFAULT NULL COMMENT '是否执行成功（0-否，1-是）',
+                                       `message` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '执行描述（执行失败时填写）',
+                                       `zip_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '报表压缩包所在位置',
+                                       `create_time` datetime(0) NULL DEFAULT NULL,
+                                       `finish_time` datetime(0) NULL DEFAULT NULL COMMENT '执行完成时间',
+                                       `execute_time` datetime(0) NULL DEFAULT NULL COMMENT '任务执行时间',
+                                       PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+DROP TABLE IF EXISTS `site_exempt_rule`;
+CREATE TABLE IF NOT EXISTS `site_exempt_rule` (
+    `id` int(0) NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `site_id` char(19) NOT NULL COMMENT '服务id',
+    `from_time` char(5) NOT NULL COMMENT '服务有效开始时间',
+    `to_time` char(5) NOT NULL COMMENT '服务有效结束时间',
+    `type` char(1) not null COMMENT '类型：1：风险检测，2：健康检查',
+    is_deleted tinyint(0) NOT NULL DEFAULT 0 COMMENT '是否删除（0：正常，1;删除）',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `update_by` varchar(100) NOT NULL COMMENT '更新人',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='服务豁免规则表' ROW_FORMAT=DYNAMIC;
+
+DROP TABLE IF EXISTS `exempt_rule`;
+CREATE TABLE IF NOT EXISTS `exempt_rule` (
+    `id` int(0) NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `site_id` char(19) NOT NULL COMMENT '服务id',
+    `api_id` char(19) NOT NULL COMMENT 'apiId',
+    `from_time` char(5) NOT NULL COMMENT '服务有效开始时间',
+    `to_time` char(5) NOT NULL COMMENT '服务有效结束时间',
+    `exempt_reason` varchar(255) NOT NULL COMMENT '豁免原因',
+    `risk_ruleId` int(0) NOT NULL COMMENT '规则名称',
+    `ip_period` varchar(255) COMMENT 'IP段',
+    rule_value varchar(255) COMMENT '规则值',
+    strategy_type tinyint(0) COMMENT ' 1.错误码，2：响应时长，3：状态码',
+    `type` char(1) not null COMMENT '类型：1：风险检测，2：健康检查',
+    is_deleted tinyint(0) NOT NULL DEFAULT 0 COMMENT '是否删除（0：正常，1;删除）',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `update_by` varchar(100) NOT NULL COMMENT '更新人',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='豁免规则表' ROW_FORMAT=DYNAMIC;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+COMMIT;
